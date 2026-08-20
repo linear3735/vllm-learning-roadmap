@@ -1,0 +1,157 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 720" width="100%" role="img">
+<title>Request run-time 完整旅程（按 4 标签分列）</title>
+<desc>14 个阶段节点，按 API Server / ZMQ / Engine Core / GPU Worker 四列分。颜色：紫=API Server，绿=Engine Core，琥珀=GPU Worker，灰=ZMQ</desc>
+<defs>
+<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+
+<text class="th" x="340" y="22" text-anchor="middle" dominant-baseline="central" fill="#26215C">一次 Request 的完整旅程（run-time）</text>
+<text class="ts" x="340" y="42" text-anchor="middle" dominant-baseline="central" fill="#5F5E5A">14 个阶段 · 跨 3 类进程 · msgpack 序列化 + ZMQ IPC</text>
+
+<g>
+<rect x="40" y="60" width="160" height="640" rx="10" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text class="th" x="120" y="84" text-anchor="middle" dominant-baseline="central" fill="#3C3489">API Server</text>
+<text class="ts" x="120" y="100" text-anchor="middle" dominant-baseline="central" fill="#534AB7">Frontend 进程</text>
+
+<g class="node"><rect x="56" y="120" width="128" height="46" rx="6" fill="#FFFFFF" stroke="#534AB7" stroke-width="0.5"/>
+<text class="ts" x="120" y="138" text-anchor="middle" dominant-baseline="central" fill="#26215C">S1 HTTP POST</text>
+<text class="ts" x="120" y="156" text-anchor="middle" dominant-baseline="central" fill="#534AB7">/v1/chat/completions</text></g>
+
+<g class="node"><rect x="56" y="178" width="128" height="46" rx="6" fill="#FFFFFF" stroke="#534AB7" stroke-width="0.5"/>
+<text class="ts" x="120" y="196" text-anchor="middle" dominant-baseline="central" fill="#26215C">S2 FastAPI router</text>
+<text class="ts" x="120" y="214" text-anchor="middle" dominant-baseline="central" fill="#534AB7">@router.post + @with_cancellation</text></g>
+
+<g class="node"><rect x="56" y="236" width="128" height="46" rx="6" fill="#FFFFFF" stroke="#534AB7" stroke-width="0.5"/>
+<text class="ts" x="120" y="254" text-anchor="middle" dominant-baseline="central" fill="#26215C">S3 OpenAIServingChat</text>
+<text class="ts" x="120" y="272" text-anchor="middle" dominant-baseline="central" fill="#534AB7">create_chat_completion</text></g>
+
+<g class="node"><rect x="56" y="294" width="128" height="46" rx="6" fill="#FFFFFF" stroke="#534AB7" stroke-width="0.5"/>
+<text class="ts" x="120" y="312" text-anchor="middle" dominant-baseline="central" fill="#26215C">S4 Renderer</text>
+<text class="ts" x="120" y="330" text-anchor="middle" dominant-baseline="central" fill="#534AB7">chat template + tokenizer</text></g>
+
+<g class="node"><rect x="56" y="352" width="128" height="46" rx="6" fill="#FFFFFF" stroke="#534AB7" stroke-width="0.5"/>
+<text class="ts" x="120" y="370" text-anchor="middle" dominant-baseline="central" fill="#26215C">S5 InputProcessor</text>
+<text class="ts" x="120" y="388" text-anchor="middle" dominant-baseline="central" fill="#534AB7">process_inputs → EngineCoreRequest</text></g>
+
+<g class="node"><rect x="56" y="410" width="128" height="46" rx="6" fill="#FFFFFF" stroke="#534AB7" stroke-width="0.5"/>
+<text class="ts" x="120" y="428" text-anchor="middle" dominant-baseline="central" fill="#26215C">S6 output_proc.add_request</text>
+<text class="ts" x="120" y="446" text-anchor="middle" dominant-baseline="central" fill="#534AB7">本地 Detokenizer 注册</text></g>
+
+<g class="node"><rect x="56" y="468" width="128" height="46" rx="6" fill="#CECBF6" stroke="#534AB7" stroke-width="0.5"/>
+<text class="ts" x="120" y="486" text-anchor="middle" dominant-baseline="central" fill="#26215C">S14 output_handler 拉</text>
+<text class="ts" x="120" y="504" text-anchor="middle" dominant-baseline="central" fill="#534AB7">process_outputs → collector</text></g>
+
+<g class="node"><rect x="56" y="526" width="128" height="46" rx="6" fill="#FFFFFF" stroke="#534AB7" stroke-width="0.5"/>
+<text class="ts" x="120" y="544" text-anchor="middle" dominant-baseline="central" fill="#26215C">S15 generate yield</text>
+<text class="ts" x="120" y="562" text-anchor="middle" dominant-baseline="central" fill="#534AB7">AsyncGenerator[RequestOutput]</text></g>
+
+<g class="node"><rect x="56" y="584" width="128" height="46" rx="6" fill="#FFFFFF" stroke="#534AB7" stroke-width="0.5"/>
+<text class="ts" x="120" y="602" text-anchor="middle" dominant-baseline="central" fill="#26215C">S16 SSE framing</text>
+<text class="ts" x="120" y="620" text-anchor="middle" dominant-baseline="central" fill="#534AB7">StreamingResponse(text/event-stream)</text></g>
+
+<g class="node"><rect x="56" y="642" width="128" height="46" rx="6" fill="#AFA9EC" stroke="#534AB7" stroke-width="0.5"/>
+<text class="ts" x="120" y="660" text-anchor="middle" dominant-baseline="central" fill="#FFFFFF">返回 HTTP 200</text>
+<text class="ts" x="120" y="678" text-anchor="middle" dominant-baseline="central" fill="#FFFFFF">text/event-stream</text></g>
+</g>
+
+<g>
+<rect x="220" y="60" width="160" height="640" rx="10" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.5"/>
+<text class="th" x="300" y="84" text-anchor="middle" dominant-baseline="central" fill="#2C2C2A">ZMQ IPC</text>
+<text class="ts" x="300" y="100" text-anchor="middle" dominant-baseline="central" fill="#5F5E5A">msgpack · ROUTER/DEALER</text>
+
+<g class="node"><rect x="236" y="430" width="128" height="62" rx="6" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="0.5"/>
+<text class="ts" x="300" y="448" text-anchor="middle" dominant-baseline="central" fill="#26215C">A input_socket.send</text>
+<text class="ts" x="300" y="466" text-anchor="middle" dominant-baseline="central" fill="#5F5E5A">EngineCoreRequest</text>
+<text class="ts" x="300" y="482" text-anchor="middle" dominant-baseline="central" fill="#5F5E5A">msgpack 序列化</text></g>
+
+<g class="node"><rect x="236" y="430" width="0" height="0" rx="6"/></g>
+
+<g class="node"><rect x="236" y="510" width="128" height="62" rx="6" fill="#D3D1C7" stroke="#5F5E5A" stroke-width="0.5"/>
+<text class="ts" x="300" y="528" text-anchor="middle" dominant-baseline="central" fill="#26215C">B output_socket.recv</text>
+<text class="ts" x="300" y="546" text-anchor="middle" dominant-baseline="central" fill="#5F5E5A">EngineCoreOutputs</text>
+<text class="ts" x="300" y="562" text-anchor="middle" dominant-baseline="central" fill="#5F5E5A">await get_output_async</text></g>
+
+<g class="node"><rect x="236" y="600" width="128" height="46" rx="6" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="0.5"/>
+<text class="ts" x="300" y="618" text-anchor="middle" dominant-baseline="central" fill="#26215C">ipc://</text>
+<text class="ts" x="300" y="636" text-anchor="middle" dominant-baseline="central" fill="#5F5E5A">进程间 unix socket</text></g>
+</g>
+
+<g>
+<rect x="400" y="60" width="160" height="640" rx="10" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text class="th" x="480" y="84" text-anchor="middle" dominant-baseline="central" fill="#085041">Engine Core</text>
+<text class="ts" x="480" y="100" text-anchor="middle" dominant-baseline="central" fill="#0F6E56">独立子进程</text>
+
+<g class="node"><rect x="416" y="120" width="128" height="46" rx="6" fill="#FFFFFF" stroke="#0F6E56" stroke-width="0.5"/>
+<text class="ts" x="480" y="138" text-anchor="middle" dominant-baseline="central" fill="#04342C">S7 input_queue.get</text>
+<text class="ts" x="480" y="156" text-anchor="middle" dominant-baseline="central" fill="#0F6E56">_handle_client_request</text></g>
+
+<g class="node"><rect x="416" y="178" width="128" height="46" rx="6" fill="#FFFFFF" stroke="#0F6E56" stroke-width="0.5"/>
+<text class="ts" x="480" y="196" text-anchor="middle" dominant-baseline="central" fill="#04342C">S8 scheduler.add_request</text>
+<text class="ts" x="480" y="214" text-anchor="middle" dominant-baseline="central" fill="#0F6E56">waiting queue</text></g>
+
+<g class="node"><rect x="416" y="236" width="128" height="46" rx="6" fill="#FFFFFF" stroke="#0F6E56" stroke-width="0.5"/>
+<text class="ts" x="480" y="254" text-anchor="middle" dominant-baseline="central" fill="#04342C">S9 scheduler.schedule</text>
+<text class="ts" x="480" y="272" text-anchor="middle" dominant-baseline="central" fill="#0F6E56">KVCache.allocate → SchedulerOutput</text></g>
+
+<g class="node"><rect x="416" y="294" width="128" height="46" rx="6" fill="#9FE1CB" stroke="#0F6E56" stroke-width="0.5"/>
+<text class="ts" x="480" y="312" text-anchor="middle" dominant-baseline="central" fill="#04342C">S10 executor.execute_model</text>
+<text class="ts" x="480" y="330" text-anchor="middle" dominant-baseline="central" fill="#0F6E56">collective RPC → worker</text></g>
+
+<g class="node"><rect x="416" y="352" width="128" height="46" rx="6" fill="#FFFFFF" stroke="#0F6E56" stroke-width="0.5"/>
+<text class="ts" x="480" y="370" text-anchor="middle" dominant-baseline="central" fill="#04342C">S12 scheduler.update_from_output</text>
+<text class="ts" x="480" y="388" text-anchor="middle" dominant-baseline="central" fill="#0F6E56">释放块 + 推进序列</text></g>
+
+<g class="node"><rect x="416" y="410" width="128" height="46" rx="6" fill="#9FE1CB" stroke="#0F6E56" stroke-width="0.5"/>
+<text class="ts" x="480" y="428" text-anchor="middle" dominant-baseline="central" fill="#04342C">S13 output_queue.put</text>
+<text class="ts" x="480" y="446" text-anchor="middle" dominant-baseline="central" fill="#04342C">EngineCoreOutputs → ZMQ</text></g>
+
+<g class="node"><rect x="416" y="468" width="128" height="46" rx="6" fill="#FFFFFF" stroke="#0F6E56" stroke-width="0.5"/>
+<text class="ts" x="480" y="486" text-anchor="middle" dominant-baseline="central" fill="#04342C">step() 主循环</text>
+<text class="ts" x="480" y="504" text-anchor="middle" dominant-baseline="central" fill="#0F6E56">schedule→execute→update</text></g>
+</g>
+
+<g>
+<rect x="580" y="60" width="80" height="640" rx="10" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/>
+<text class="th" x="620" y="84" text-anchor="middle" dominant-baseline="central" fill="#633806">Worker</text>
+<text class="ts" x="620" y="100" text-anchor="middle" dominant-baseline="central" fill="#854F0B">GPU 进程</text>
+
+<g class="node"><rect x="592" y="294" width="56" height="46" rx="6" fill="#FFFFFF" stroke="#854F0B" stroke-width="0.5"/>
+<text class="ts" x="620" y="312" text-anchor="middle" dominant-baseline="central" fill="#412402">S11 forward</text>
+<text class="ts" x="620" y="330" text-anchor="middle" dominant-baseline="central" fill="#854F0B">model + sampler</text></g>
+
+<g class="node"><rect x="592" y="352" width="56" height="46" rx="6" fill="#FAC775" stroke="#854F0B" stroke-width="0.5"/>
+<text class="ts" x="620" y="370" text-anchor="middle" dominant-baseline="central" fill="#412402">CUDA</text>
+<text class="ts" x="620" y="388" text-anchor="middle" dominant-baseline="central" fill="#412402">kernel</text></g>
+</g>
+
+<g>
+<path stroke="#3C3489" stroke-width="1.2" fill="none" marker-end="url(#arrow)" d="M120 166 L120 178" />
+<path stroke="#3C3489" stroke-width="1.2" fill="none" marker-end="url(#arrow)" d="M120 224 L120 236" />
+<path stroke="#3C3489" stroke-width="1.2" fill="none" marker-end="url(#arrow)" d="M120 282 L120 294" />
+<path stroke="#3C3489" stroke-width="1.2" fill="none" marker-end="url(#arrow)" d="M120 340 L120 352" />
+<path stroke="#3C3489" stroke-width="1.2" fill="none" marker-end="url(#arrow)" d="M120 398 L120 410" />
+<path stroke="#3C3489" stroke-width="1.2" fill="none" marker-end="url(#arrow)" d="M184 430 L236 460" />
+<path stroke="#3C3489" stroke-width="1.2" fill="none" marker-end="url(#arrow)" d="M480 460 L364 540 L184 514" stroke-dasharray="3 3" />
+<path stroke="#3C3489" stroke-width="1.2" fill="none" marker-end="url(#arrow)" d="M120 514 L120 526" />
+<path stroke="#3C3489" stroke-width="1.2" fill="none" marker-end="url(#arrow)" d="M120 572 L120 584" />
+<path stroke="#3C3489" stroke-width="1.2" fill="none" marker-end="url(#arrow)" d="M120 630 L120 642" />
+
+<path stroke="#5F5E5A" stroke-width="1.5" fill="none" marker-end="url(#arrow)" d="M184 460 L236 460" />
+<path stroke="#5F5E5A" stroke-width="1.5" fill="none" marker-end="url(#arrow)" d="M364 540 L236 540" />
+
+<path stroke="#0F6E56" stroke-width="1.2" fill="none" marker-end="url(#arrow)" d="M480 166 L480 178" />
+<path stroke="#0F6E56" stroke-width="1.2" fill="none" marker-end="url(#arrow)" d="M480 224 L480 236" />
+<path stroke="#0F6E56" stroke-width="1.2" fill="none" marker-end="url(#arrow)" d="M480 282 L480 294" />
+<path stroke="#0F6E56" stroke-width="1.2" fill="none" marker-end="url(#arrow)" d="M480 340 L480 352" />
+<path stroke="#0F6E56" stroke-width="1.2" fill="none" marker-end="url(#arrow)" d="M480 398 L480 410" />
+<path stroke="#0F6E56" stroke-width="1.2" fill="none" marker-end="url(#arrow)" d="M480 456 L480 468" />
+
+<path stroke="#854F0B" stroke-width="1.2" fill="none" marker-end="url(#arrow)" d="M544 318 L592 318" />
+<path stroke="#854F0B" stroke-width="1.2" fill="none" marker-end="url(#arrow)" d="M620 340 L620 352" />
+</g>
+
+<g>
+<rect x="40" y="710" width="620" height="0" fill="none"/>
+<text class="ts" x="350" y="708" text-anchor="middle" dominant-baseline="central" fill="#5F5E5A">说明：紫色实线箭头 = 进程内函数调用；灰色 = ZMQ 跨进程；绿色 = EngineCore 内；琥珀 = Worker 内；紫色虚线 = 输出回流</text>
+</g>
+</svg>
