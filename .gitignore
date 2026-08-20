@@ -1,0 +1,3 @@
+# WorkBuddy local session / memory data — do not commit
+.workbuddy/
+.DS_Store
