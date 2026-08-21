@@ -1,0 +1,18 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "debug opt",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run_opt.py",
+      "python": "/opt/miniconda3/envs/dbg/bin/python",
+      "console": "internalConsole",
+      "justMyCode": false,
+      "env": {
+        "HF_ENDPOINT": "https://hf-mirror.com",
+        "HF_HUB_ENDPOINT": "https://hf-mirror.com"
+      }
+    }
+  ]
+}
